@@ -242,6 +242,7 @@ let volume = 85, sessionSecs = 0, translationCount = 0, demoIndex = 0;
 let sessionTimer = null, karaokeTimer = null;
 let continuousActive = false;
 const synth = window.speechSynthesis;
+let audioUnlocked = false;
 
 // Build lang dropdown
 const dropdown = document.getElementById('lang-dropdown');
@@ -277,6 +278,13 @@ function formatTime(s) {
 }
 
 function toggleApp() {
+  // Desbloquear áudio no primeiro clique
+  if (!audioUnlocked) {
+    const silence = new SpeechSynthesisUtterance('');
+    silence.volume = 0;
+    synth.speak(silence);
+    audioUnlocked = true;
+  }
   isActive = !isActive;
   const btn = document.getElementById('power-btn');
   const status = document.getElementById('power-status');
@@ -497,6 +505,13 @@ function startListening() {
 
 async function runDemo() {
   if (!isActive) return;
+  // Desbloquear áudio
+  if (!audioUnlocked) {
+    const silence = new SpeechSynthesisUtterance('');
+    silence.volume = 0;
+    synth.speak(silence);
+    audioUnlocked = true;
+  }
   synth.cancel();
   clearError();
   const phrase = DEMOS[demoIndex % DEMOS.length];
