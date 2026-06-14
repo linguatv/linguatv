@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<meta name="theme-color" content="#090910" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>LinguaTV</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #090910; color: #fff; font-family: 'Inter', 'Segoe UI', sans-serif; min-height: 100vh; overflow-x: hidden; }
+input[type=range] { width: 100%; accent-color: #00E5A0; cursor: pointer; height: 4px; }
+button { font-family: inherit; }
+@keyframes p1 { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(1.6); opacity: 0; } }
+@keyframes p2 { 0% { transform: scale(1); opacity: 0.3; } 100% { transform: scale(2); opacity: 0; } }
+.pulse1 { animation: p1 2s infinite; }
+.pulse2 { animation: p1 2s infinite 0.7s; }
+#root { max-width: 420px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+
+/* Header */
+.header { padding: 20px 20px 0; display: flex; align-items: center; justify-content: space-between; }
+.logo { display: flex; align-items: center; gap: 8px; }
+.logo-text { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, #00E5A0, #00B8FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.header-right { display: flex; align-items: center; gap: 10px; }
+.session-time { font-size: 11px; color: #555; font-family: monospace; }
+.stats-btn { background: none; border: none; color: #555; cursor: pointer; font-size: 18px; }
+
+/* Stats */
+.stats-panel { margin: 12px 20px 0; background: #111118; border-radius: 16px; border: 1px solid #ffffff08; padding: 16px; }
+.stats-label { font-size: 10px; color: #444; letter-spacing: 0.1em; margin-bottom: 12px; }
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.stat-item { background: #18181F; border-radius: 10px; padding: 10px 12px; }
+.stat-icon { font-size: 16px; margin-bottom: 4px; }
+.stat-value { font-size: 16px; font-weight: 700; color: #00E5A0; }
+.stat-name { font-size: 10px; color: #555; }
+
+/* Power */
+.power-section { display: flex; flex-direction: column; align-items: center; padding: 20px 0 24px; }
+.power-wrap { position: relative; margin-bottom: 14px; }
+.pulse-ring1 { position: absolute; inset: -12px; border-radius: 50%; border: 1px solid #00E5A044; }
+.pulse-ring2 { position: absolute; inset: -24px; border-radius: 50%; border: 1px solid #00E5A022; }
+.power-btn { width: 88px; height: 88px; border-radius: 50%; border: 3px solid #222230; cursor: pointer; font-size: 30px; transition: all 0.4s; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 38% 32%, #252530, #15151E); }
+.power-btn.active { background: radial-gradient(circle at 38% 32%, #00E5A0, #00B8FF88); border-color: #00E5A0; box-shadow: 0 0 40px #00E5A055; }
+.power-status { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; color: #333; transition: color 0.4s; }
+.power-status.active { color: #00E5A0; }
+
+/* Toggles */
+.toggles { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 0 20px 16px; }
+.toggle-btn { padding: 10px 6px; background: #111118; border: 1px solid #ffffff08; border-radius: 12px; cursor: not-allowed; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: all 0.3s; }
+.toggle-btn.enabled { cursor: pointer; }
+.toggle-icon { font-size: 16px; }
+.toggle-label { font-size: 9px; font-weight: 700; color: #444; letter-spacing: 0.06em; }
+.toggle-sub { font-size: 8px; color: #333; }
+
+/* Lang */
+.lang-section { margin: 0 20px 14px; position: relative; }
+.section-label { font-size: 9px; color: #444; letter-spacing: 0.1em; display: block; margin-bottom: 6px; }
+.lang-btn { width: 100%; padding: 13px 16px; background: #111118; border: 1px solid #ffffff08; border-radius: 14px; color: #444; cursor: not-allowed; display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 600; transition: all 0.3s; }
+.lang-btn.enabled { color: #fff; cursor: pointer; }
+.lang-dropdown { position: absolute; top: 100%; left: 0; right: 0; z-index: 50; background: #1C1C24; border: 1px solid #00E5A033; border-radius: 14px; margin-top: 6px; overflow: hidden; box-shadow: 0 16px 48px #000000aa; }
+.lang-option { width: 100%; padding: 12px 16px; background: transparent; border: none; border-bottom: 1px solid #ffffff05; color: #777; cursor: pointer; text-align: left; font-size: 13px; font-family: inherit; display: flex; align-items: center; gap: 10px; }
+.lang-option.selected { background: #00E5A015; color: #00E5A0; font-weight: 700; }
+
+/* Volume */
+.volume-section { margin: 0 20px 18px; }
+.volume-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.volume-val { font-size: 9px; color: #00E5A0; font-weight: 700; }
+
+/* Actions */
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 20px 16px; }
+.action-btn { padding: 16px 12px; background: #111118; border: 1px solid #ffffff08; border-radius: 14px; color: #777; cursor: pointer; font-size: 12px; font-weight: 600; font-family: inherit; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.3s; }
+.action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.action-btn .btn-icon { font-size: 22px; }
+.action-btn.demo { background: linear-gradient(135deg, #00E5A015, #00B8FF15); border-color: #00B8FF22; color: #00B8FF; }
+
+/* Status */
+.status-bar { margin: 0 20px; padding: 11px 14px; background: #111118; border-radius: 12px; display: flex; align-items: center; gap: 10px; border: 1px solid #ffffff06; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: #2a2a3a; transition: all 0.3s; flex-shrink: 0; }
+.status-text { font-size: 11px; color: #555; flex: 1; }
+.detected-lang { font-size: 10px; color: #00B8FF; font-weight: 600; flex-shrink: 0; }
+
+/* Translation */
+.translation-section { margin: 14px 20px 0; }
+.trans-box { padding: 12px 14px; background: #111118; border-radius: 12px; margin-bottom: 8px; border: 1px solid #ffffff05; }
+.trans-box.result { background: #00E5A00f; border-color: #00E5A020; }
+.trans-box-label { font-size: 9px; color: #444; letter-spacing: 0.1em; margin-bottom: 5px; }
+.trans-box-label.accent { color: #00E5A0; }
+.trans-text { font-size: 12px; color: #777; line-height: 1.6; }
+.trans-text.result { font-size: 13px; color: #ddd; font-weight: 500; }
+
+/* Continuous banner */
+.continuous-banner { margin: 14px 20px 0; padding: 12px 14px; background: #00B8FF10; border: 1px solid #00B8FF30; border-radius: 12px; display: flex; align-items: center; gap: 10px; }
+.banner-title { font-size: 11px; color: #00B8FF; font-weight: 700; }
+.banner-sub { font-size: 10px; color: #555; }
+
+/* Error */
+.error-box { margin: 12px 20px 0; padding: 11px 14px; background: #FF444410; border: 1px solid #FF444428; border-radius: 12px; font-size: 11px; color: #FF7777; }
+
+/* Karaoke */
+.karaoke-overlay { position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, #000000f0); padding: 48px 20px 32px; z-index: 100; text-align: center; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+
+/* Footer */
+.footer { padding: 12px 20px 28px; border-top: 1px solid #ffffff06; display: flex; justify-content: space-between; margin-top: auto; }
+.footer span { font-size: 10px; color: #2a2a3a; }
+
+/* Glow */
+.glow { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); width: 300px; height: 300px; border-radius: 50%; background: transparent; transition: all 1s; pointer-events: none; z-index: 0; }
+.glow.active { background: radial-gradient(circle, #00E5A020, transparent 70%); }
+</style>
+</head>
+<body>
+<div class="glow" id="glow"></div>
+<div id="karaoke-overlay" style="display:none" class="karaoke-overlay"></div>
+<div id="root">
+<div class="header">
+<div class="logo">
+<span>📺</span>
+<span class="logo-text">LinguaTV</span>
+</div>
+<div class="header-right">
+<span class="session-time" id="session-time" style="display:none">00:00</span>
+<button class="stats-btn" onclick="toggleStats()">📊</button>
+</div>
+</div>
+
+<div id="stats-panel" style="display:none" class="stats-panel">
+<div class="stats-label">ESTATÍSTICAS</div>
+<div class="stats-grid">
+<div class="stat-item"><div class="stat-icon">⚡</div><div class="stat-value" id="stat-count">0</div><div class="stat-name">Traduções</div></div>
+<div class="stat-item"><div class="stat-icon">⏱️</div><div class="stat-value" id="stat-time">00:00</div><div class="stat-name">Tempo</div></div>
+<div class="stat-item"><div class="stat-icon">🌍</div><div class="stat-value" id="stat-lang">🇧🇷</div><div class="stat-name">Língua</div></div>
+<div class="stat-item"><div class="stat-icon">🔄</div><div class="stat-value" id="stat-mode">Manual</div><div class="stat-name">Modo</div></div>
+</div>
+</div>
+
+<div class="power-section">
+<div class="power-wrap" id="power-wrap">
+<button class="power-btn" id="power-btn" onclick="toggleApp()">⏻</button>
+</div>
+<span class="power-status" id="power-status">○ DESLIGADO</span>
+</div>
+
+<div class="toggles">
+<button class="toggle-btn" id="toggle-auto" onclick="toggleAuto()">
+<span class="toggle-icon">🔍</span>
+<span class="toggle-label">AUTO</span>
+<span class="toggle-sub" id="auto-sub">DESLIGADO</span>
+</button>
+<button class="toggle-btn" id="toggle-karaoke" onclick="toggleKaraoke()">
+<span class="toggle-icon">🎤</span>
+<span class="toggle-label">KARAOKE</span>
+<span class="toggle-sub" id="karaoke-sub">DESLIGADO</span>
+</button>
+<button class="toggle-btn" id="toggle-continuous" onclick="toggleContinuous()">
+<span class="toggle-icon">🔄</span>
+<span class="toggle-label">AUTO</span>
+<span class="toggle-sub" id="continuous-sub">DESLIGADO</span>
+</button>
+</div>
+
+<div class="lang-section">
+<label class="section-label">TRADUZIR PARA</label>
+<button class="lang-btn" id="lang-btn" onclick="toggleLangMenu()">
+<span id="lang-display">🇧🇷 Português Brasil</span>
+<span style="color:#444;font-size:10px">▼</span>
+</button>
+<div class="lang-dropdown" id="lang-dropdown" style="display:none"></div>
+</div>
+
+<div class="volume-section">
+<div class="volume-header">
+<label class="section-label">🔊 VOLUME</label>
+<span class="volume-val" id="vol-display">85%</span>
+</div>
+<input type="range" min="0" max="100" value="85" id="volume-slider" disabled onchange="updateVolume(this.value)" />
+</div>
+
+<div class="actions" id="actions" style="display:none">
+<button class="action-btn" id="speak-btn" onclick="startListening()">
+<span class="btn-icon">🎙️</span>
+<span id="speak-label">Falar agora</span>
+</button>
+<button class="action-btn demo" id="demo-btn" onclick="runDemo()">
+<span class="btn-icon">▶</span>
+<span id="demo-label">Demo TV</span>
+</button>
+</div>
+
+<div class="status-bar" id="status-bar" style="display:none">
+<div class="status-dot" id="status-dot"></div>
+<span class="status-text" id="status-text">Pronto</span>
+<span class="detected-lang" id="detected-lang"></span>
+</div>
+
+<div id="translation-section" style="display:none" class="translation-section">
+<div class="trans-box">
+<div class="trans-box-label" id="original-label">ORIGINAL</div>
+<p class="trans-text" id="original-text"></p>
+</div>
+<div class="trans-box result" id="result-box" style="display:none">
+<div class="trans-box-label accent" id="result-label">🇧🇷 PORTUGUÊS BRASIL</div>
+<p class="trans-text result" id="result-text"></p>
+</div>
+</div>
+
+<div id="continuous-banner" style="display:none" class="continuous-banner">
+<span style="font-size:16px">🔄</span>
+<div><div class="banner-title">Modo Segundo Plano Ativo</div><div class="banner-sub">A traduzir automaticamente em background</div></div>
+</div>
+
+<div id="error-box" style="display:none" class="error-box"></div>
+
+<div class="footer">
+<span>LinguaTV © 2026</span>
+<span>Desenvolvido por Ostelindo</span>
+</div>
+</div>
+
+<script>
+const LANGUAGES = [
+{ code: "pt-BR", label: "Português Brasil", flag: "🇧🇷" },
+{ code: "en", label: "English", flag: "🇬🇧" },
+{ code: "fr", label: "Français", flag: "🇫🇷" },
+{ code: "es", label: "Español", flag: "🇪🇸" },
+{ code: "de", label: "Deutsch", flag: "🇩🇪" },
+{ code: "it", label: "Italiano", flag: "🇮🇹" },
+{ code: "pt", label: "Português", flag: "🇵🇹" },
+{ code: "cv", label: "Crioulo CV", flag: "🇨🇻" },
+];
+
+const DEMOS = [
+"Good evening and welcome to the world news. Tonight, scientists announced a major breakthrough in clean energy technology.",
+"Bonsoir et bienvenue au journal télévisé. Ce soir, nous parlons des nouvelles découvertes scientifiques en Europe.",
+"Buenas noches, bienvenidos al noticiero. El equipo nacional ganó el campeonato mundial de fútbol esta tarde.",
+"Guten Abend und willkommen bei den Nachrichten. Heute berichten wir über neue Entwicklungen in der Technologie.",
+];
+
+let isActive = false, autoDetect = true, karaokeMode = false, isContinuous = false;
+let selectedLang = LANGUAGES[0];
+let volume = 85, sessionSecs = 0, translationCount = 0, demoIndex = 0;
+let sessionTimer = null, karaokeTimer = null;
+let continuousActive = false;
+const synth = window.speechSynthesis;
+
+// Build lang dropdown
+const dropdown = document.getElementById('lang-dropdown');
+LANGUAGES.forEach((lang, i) => {
+const btn = document.createElement('button');
+btn.className = 'lang-option' + (i === 0 ? ' selected' : '');
+btn.innerHTML = `${lang.flag} ${lang.label}`;
+btn.onclick = () => selectLang(i);
+dropdown.appendChild(btn);
+});
+
+function selectLang(i) {
+selectedLang = LANGUAGES[i];
+document.getElementById('lang-display').textContent = `${selectedLang.flag} ${selectedLang.label}`;
+document.getElementById('result-label').textContent = `${selectedLang.flag} ${selectedLang.label.toUpperCase()}`;
+document.getElementById('stat-lang').textContent = selectedLang.flag;
+dropdown.querySelectorAll('.lang-option').forEach((b, j) => b.className = 'lang-option' + (j === i ? ' selected' : ''));
+dropdown.style.display = 'none';
+}
+
+function toggleLangMenu() {
+if (!isActive) return;
+dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleStats() {
+const p = document.getElementById('stats-panel');
+p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+
+function formatTime(s) {
+return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+}
+
+function toggleApp() {
+isActive = !isActive;
+const btn = document.getElementById('power-btn');
+const status = document.getElementById('power-status');
+const glow = document.getElementById('glow');
+const wrap = document.getElementById('power-wrap');
+
+if (isActive) {
+btn.classList.add('active');
+status.textContent = '● LIGADO';
+status.classList.add('active');
+glow.classList.add('active');
+document.getElementById('session-time').style.display = 'inline';
+document.getElementById('actions').style.display = 'grid';
+document.getElementById('status-bar').style.display = 'flex';
+document.getElementById('volume-slider').disabled = false;
+document.getElementById('lang-btn').classList.add('enabled');
+['toggle-auto','toggle-karaoke','toggle-continuous'].forEach(id => {
+document.getElementById(id).classList.add('enabled');
+});
+// pulse rings
+if (!wrap.querySelector('.pulse-ring1')) {
+const r1 = document.createElement('div'); r1.className = 'pulse-ring1 pulse1'; wrap.insertBefore(r1, btn);
+const r2 = document.createElement('div'); r2.className = 'pulse-ring2 pulse2'; wrap.insertBefore(r2, btn);
+}
+sessionTimer = setInterval(() => {
+sessionSecs++;
+const t = formatTime(sessionSecs);
+document.getElementById('session-time').textContent = t;
+document.getElementById('stat-time').textContent = t;
+}, 1000);
+// auto detect on by default
+autoDetect = true;
+updateToggle('toggle-auto', 'auto-sub', autoDetect, '#00E5A0');
+} else {
+stopAll();
+btn.classList.remove('active');
+status.textContent = '○ DESLIGADO';
+status.classList.remove('active');
+glow.classList.remove('active');
+document.getElementById('session-time').style.display = 'none';
+document.getElementById('actions').style.display = 'none';
+document.getElementById('status-bar').style.display = 'none';
+document.getElementById('translation-section').style.display = 'none';
+document.getElementById('continuous-banner').style.display = 'none';
+document.getElementById('error-box').style.display = 'none';
+document.getElementById('volume-slider').disabled = true;
+document.getElementById('lang-btn').classList.remove('enabled');
+['toggle-auto','toggle-karaoke','toggle-continuous'].forEach(id => {
+document.getElementById(id).classList.remove('enabled');
+});
+wrap.querySelectorAll('.pulse-ring1,.pulse-ring2').forEach(r => r.remove());
+clearInterval(sessionTimer); sessionSecs = 0; translationCount = 0;
+document.getElementById('stat-count').textContent = '0';
+document.getElementById('stat-time').textContent = '00:00';
+document.getElementById('stat-mode').textContent = 'Manual';
+}
+}
+
+function updateToggle(id, subId, state, color) {
+const btn = document.getElementById(id);
+const sub = document.getElementById(subId);
+if (state) {
+btn.style.background = color + '15';
+btn.style.borderColor = color + '44';
+btn.querySelectorAll('.toggle-label,.toggle-icon').forEach(el => el.style.color = color);
+sub.style.color = color;
+sub.textContent = 'LIGADO';
+} else {
+btn.style.background = '#111118';
+btn.style.borderColor = '#ffffff08';
+btn.querySelectorAll('.toggle-label,.toggle-icon').forEach(el => el.style.color = '#444');
+sub.style.color = '#333';
+sub.textContent = 'DESLIGADO';
+}
+}
+
+function toggleAuto() {
+if (!isActive) return;
+autoDetect = !autoDetect;
+updateToggle('toggle-auto', 'auto-sub', autoDetect, '#00E5A0');
+}
+
+function toggleKaraoke() {
+if (!isActive) return;
+karaokeMode = !karaokeMode;
+updateToggle('toggle-karaoke', 'karaoke-sub', karaokeMode, '#FFD700');
+}
+
+function toggleContinuous() {
+if (!isActive) return;
+isContinuous = !isContinuous;
+continuousActive = isContinuous;
+updateToggle('toggle-continuous', 'continuous-sub', isContinuous, '#00B8FF');
+document.getElementById('stat-mode').textContent = isContinuous ? 'Auto' : 'Manual';
+document.getElementById('continuous-banner').style.display = isContinuous ? 'flex' : 'none';
+if (isContinuous) startListening();
+}
+
+function updateVolume(val) {
+volume = parseInt(val);
+document.getElementById('vol-display').textContent = val + '%';
+}
+
+function setStatus(text, dotColor, glow) {
+document.getElementById('status-text').textContent = text;
+const dot = document.getElementById('status-dot');
+dot.style.background = dotColor;
+dot.style.boxShadow = glow ? `0 0 8px ${dotColor}` : 'none';
+}
+
+function showError(msg) {
+const box = document.getElementById('error-box');
+box.textContent = '⚠️ ' + msg;
+box.style.display = 'block';
+}
+
+function clearError() {
+document.getElementById('error-box').style.display = 'none';
+}
+
+function setBusy(busy) {
+document.getElementById('speak-btn').disabled = busy;
+document.getElementById('demo-btn').disabled = busy;
+}
+
+async function detectAndTranslate(text) {
+setBusy(true);
+setStatus('⚡ IA a traduzir...', '#00B8FF', true);
+clearError();
+try {
+const res = await fetch('https://api.anthropic.com/v1/messages', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({
+model: 'claude-sonnet-4-6',
+max_tokens: 1000,
+messages: [{ role: 'user', content: `You are a real-time TV translation engine. Detect the language and translate to ${selectedLang.label}. Keep it natural. Respond ONLY in this JSON format (no markdown): {"detected":"[Language + flag emoji]","translation":"[translated text]"}\n\nText: "${text}"` }]
+})
+});
+const data = await res.json();
+const raw = (data.content?.[0]?.text || '{}').replace(/```json|```/g, '').trim();
+const parsed = JSON.parse(raw);
+translationCount++;
+document.getElementById('stat-count').textContent = translationCount;
+if (parsed.detected && autoDetect) {
+document.getElementById('detected-lang').textContent = parsed.detected;
+document.getElementById('original-label').textContent = 'ORIGINAL · ' + parsed.detected;
+}
+document.getElementById('original-text').textContent = text;
+document.getElementById('translation-section').style.display = 'block';
+if (parsed.translation) {
+document.getElementById('result-text').textContent = parsed.translation;
+document.getElementById('result-box').style.display = 'block';
+}
+setBusy(false);
+return parsed.translation || '';
+} catch(e) {
+showError('Erro de tradução. Verifica a ligação à internet.');
+setBusy(false);
+setStatus('Pronto', '#2a2a3a', false);
+return '';
+}
+}
+
+function speakText(text, langCode) {
+synth.cancel();
+if (karaokeTimer) clearInterval(karaokeTimer);
+const utter = new SpeechSynthesisUtterance(text);
+utter.lang = langCode;
+utter.volume = volume / 100;
+utter.rate = 0.95;
+utter.onstart = () => {
+setStatus(karaokeMode ? '🎤 Karaoke ativo' : '🔊 A reproduzir...', '#FFD700', true);
+if (karaokeMode) {
+const words = text.split(' ');
+const overlay = document.getElementById('karaoke-overlay');
+overlay.style.display = 'flex';
+overlay.innerHTML = words.map((w,i) => `<span id="kw${i}" style="color:#ffffff22;font-size:18px;font-weight:400;transition:all 0.15s">${w}</span>`).join('');
+let i = 0;
+const ms = ((words.length / 120) * 60000) / words.length;
+karaokeTimer = setInterval(() => {
+if (i > 0) { const prev = document.getElementById('kw'+(i-1)); if(prev) { prev.style.color='#ffffff66'; prev.style.fontSize='18px'; prev.style.fontWeight='400'; prev.style.textShadow='none'; } }
+const cur = document.getElementById('kw'+i);
+if (cur) { cur.style.color='#00E5A0'; cur.style.fontSize='24px'; cur.style.fontWeight='800'; cur.style.textShadow='0 0 16px #00E5A0'; }
+i++;
+if (i >= words.length) clearInterval(karaokeTimer);
+}, ms);
+}
+};
+utter.onend = () => {
+setStatus(continuousActive ? '🔄 Contínuo ativo' : 'Pronto', continuousActive ? '#00B8FF' : '#2a2a3a', continuousActive);
+document.getElementById('karaoke-overlay').style.display = 'none';
+if (continuousActive && isActive) setTimeout(() => startListening(), 500);
+};
+synth.speak(utter);
+}
+
+function startListening() {
+if (!isActive) return;
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (!SR) { showError('Reconhecimento de voz não suportado. Usa o modo Demo.'); return; }
+const rec = new SR();
+rec.lang = autoDetect ? '' : selectedLang.code;
+rec.continuous = false;
+rec.interimResults = false;
+rec.onstart = () => { setStatus('🎙️ A ouvir canal...', '#00E5A0', true); clearError(); document.getElementById('speak-label').textContent = 'A ouvir...'; };
+rec.onresult = async (e) => {
+const text = e.results[0][0].transcript;
+document.getElementById('speak-label').textContent = 'Falar agora';
+const translated = await detectAndTranslate(text);
+if (translated) speakText(translated, selectedLang.code);
+else setStatus('Pronto', '#2a2a3a', false);
+};
+rec.onerror = () => { document.getElementById('speak-label').textContent = 'Falar agora'; setStatus('Pronto', '#2a2a3a', false); };
+rec.onend = () => { document.getElementById('speak-label').textContent = 'Falar agora'; };
+rec.start();
+}
+
+async function runDemo() {
+if (!isActive) return;
+synth.cancel();
+clearError();
+const phrase = DEMOS[demoIndex % DEMOS.length];
+demoIndex++;
+document.getElementById('demo-label').textContent = 'A traduzir...';
+const translated = await detectAndTranslate(phrase);
+document.getElementById('demo-label').textContent = 'Demo TV';
+if (translated) speakText(translated, selectedLang.code);
+else setStatus('Pronto', '#2a2a3a', false);
+}
+
+function stopAll() {
+continuousActive = false;
+isContinuous = false;
+synth.cancel();
+if (karaokeTimer) clearInterval(karaokeTimer);
+document.getElementById('karaoke-overlay').style.display = 'none';
+setStatus('Pronto', '#2a2a3a', false);
+}
+</script>
+</body>
+</html>
